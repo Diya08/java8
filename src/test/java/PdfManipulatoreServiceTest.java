@@ -4,35 +4,71 @@ import util.pdfbox.PdfManipulatorService;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.reflect.Method;
 import java.net.URI;
+import java.sql.Date;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-// @TestInstance(TestInstance.Lifecycle.PER_METHOD)
+/**
+ * when we have all/few/none lifecycle methods, TestInstance.Lifecycle.PER_CLASS can be used
+ * when we have only beforeEach and/or afterEach lifecycle methods,
+ * TestInstance.Lifecycle.PER_METHOD can be used - This is by default
+ */
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 // @TestPropertySource
 // @TestExecutionListeners
-class PdfManipulatoreServiceTest {
-/*
+
+// custom display name
+@DisplayNameGeneration(PdfManipulatoreServiceTest.CustomDisplayNameGeneration.class)
+
+public class PdfManipulatoreServiceTest {
+
+    /**
+     * executed only once per test class
+     * void return type
+     * must not be private
+     * must be static by default
+     */
+
     @BeforeAll
     // @Test
     void initBeforeAll() {
-
+        System.out.println("BeforeAll called");
     }
 
+    /**
+     * executes before each test method
+     * void return type
+     * must not be private
+     * must be static
+     * Can optionally declare parameters to be resolved by <>@ParameterResolvers</>
+     * May be used as meta annotation for custom annotations
+     */
     @BeforeEach
     // @Test
     void doBeforeEachMethod() {
-
+        System.out.println(Date.valueOf(LocalDate.now()));
     }
 
+    /**
+     * executed after each of @Test, @RepeatedTest, @ParameterizedTest
+     * @TestFactory and @TestTemplate methods
+     * void, not private, not static
+     */
     @AfterEach
     // @Test
     void doAfterEachMethod() {
-
+        System.out.println("If 2 AfterEach methods, there is no order it follows; any one of them gets executed first, similar to before each method");
     }
 
+    /**
+     *
+     */
     @AfterAll
     // @Test
     // @Testable
@@ -40,7 +76,7 @@ class PdfManipulatoreServiceTest {
     // @TestTemplate
     void doAfterAllMethod() {
 
-    }*/
+    }
 
     /**
      * @Test
@@ -56,6 +92,7 @@ class PdfManipulatoreServiceTest {
     }
 
     @Test
+    @DisplayName("Should return number of pages requested")
     void retrievePagesByPageCount() throws Exception {
         PdfManipulatorService pdfManipulatorService = new PdfManipulatorService();
 
@@ -76,7 +113,8 @@ class PdfManipulatoreServiceTest {
     }
 
     @Test
-    void retrievePages() throws Exception {
+    @DisplayName("@DisplayName has precedence over @DisplayNameGeneration")
+    void retrieve_Pages() throws Exception {
         PdfManipulatorService pdfManipulatorService = new PdfManipulatorService();
 
         File parentDirectory = new File(new URI(String.valueOf(this.getClass().getResource("/"))));
@@ -181,5 +219,41 @@ class PdfManipulatoreServiceTest {
 
         boolean delete = new File(this.getClass().getResource("/myImage.jpg").getFile()).delete();
         assertTrue(delete);
+    }
+
+    // custom DisplayNameGenerator
+    static class CustomDisplayNameGeneration extends DisplayNameGenerator.Standard {
+        public CustomDisplayNameGeneration() {
+
+        }
+
+        @Override
+        public String generateDisplayNameForClass(Class<?> testClass) {
+            return replaceTheName(super.generateDisplayNameForClass(testClass));
+        }
+
+        @Override
+        public String generateDisplayNameForNestedClass(Class<?> testClass) {
+            return replaceTheName(super.generateDisplayNameForNestedClass(testClass));
+        }
+
+        @Override
+        public String generateDisplayNameForMethod(Class<?> testClass, Method testMethod) {
+            return replaceTheName(super.generateDisplayNameForMethod(testClass, testMethod));
+        }
+
+        private String replaceTheName(String name) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(name.charAt(0));
+
+            for(int i = 1; i <name.length(); i++) {
+                if(Character.isUpperCase(name.charAt(i))) {
+                    sb.append(" ");
+                    //sb.append(Character.toLowerCase(name.charAt(i)));
+                }
+                sb.append(Character.toLowerCase(name.charAt(i)));
+            }
+            return String.valueOf(sb);
+        }
     }
 }
